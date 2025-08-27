@@ -1,0 +1,474 @@
+<!-- templates/index.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NUMENERGIA | Simulateur Énergétique</title>
+    
+    <!-- Librairie pour la carte interactive -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Police de caractères moderne -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Librairie pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lien vers notre fichier de style -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <div id="app-container" class="app-container">
+        <!-- ===================================================================== -->
+        <!-- PANNEAU DE GAUCHE : NAVIGATION                                        -->
+        <!-- ===================================================================== -->
+        <aside class="left-pane">
+            <div class="pane-header-left">
+                <div class="logo-text">NUMENERGIA</div>
+            </div>
+
+            <nav class="main-nav">
+                <a href="#" id="new-sim-btn" class="nav-item active" title="Nouvelle Simulation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                    <span>Nouvelle Simulation</span>
+                </a>
+                <a href="#" id="history-btn" class="nav-item" title="Historique">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    <span>Historique</span>
+                </a>
+                <a href="#" id="settings-btn" class="nav-item" title="Paramètres">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2.82l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2.82l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span>Paramètres</span>
+                </a>
+            </nav>
+
+            <div class="pane-footer-left">
+                <p>Version 1.0.0</p>
+            </div>
+        </aside>
+
+        <!-- ===================================================================== -->
+        <!-- PANNEAU CENTRAL : ESPACE DE TRAVAIL                                   -->
+        <!-- ===================================================================== -->
+        <main id="center-pane" class="center-pane">
+            <div id="map-view" class="workspace-view active"><div id="map"></div></div>
+            <div id="results-view" class="workspace-view"></div>
+            <div id="history-view" class="workspace-view"></div>
+        </main>
+
+        <!-- ===================================================================== -->
+        <!-- PANNEAU DE DROITE : CONFIGURATION                                     -->
+        <!-- ===================================================================== -->
+        <aside id="right-pane" class="right-pane">
+            <div class="pane-header">
+                <h3>Configuration du Projet</h3>
+                <button id="right-pane-toggle" class="pane-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+            <div class="pane-content">
+                <div class="form-section">
+                    <h4>Priorité d'Optimisation</h4>
+                    <div class="radio-group">
+                        <input type="radio" id="target_performance" name="optimization_target" value="performance" checked>
+                        <label for="target_performance">Performance</label>
+                        <input type="radio" id="target_budget" name="optimization_target" value="budget">
+                        <label for="target_budget">Budget</label>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h4>Localisation</h4>
+                    <button class="btn-secondary" onclick="geolocateAndShowMap()"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Me Géolocaliser</button>
+                    <input type="text" id="coords" placeholder="Latitude, Longitude" disabled>
+                </div>
+                <div class="form-section">
+                    <h4>Besoins Énergétiques</h4>
+                    <div class="form-group"><label for="volume">Volume d'eau / jour (m³)</label><input type="number" id="volume" placeholder="50"></div>
+                    <div class="form-group"><label for="hmt">Hauteur de pompage (HMT en m)</label><input type="number" id="hmt" placeholder="30"></div>
+                </div>
+                <div class="form-section">
+                    <h4>Stockage & Autonomie</h4>
+                    <div class="form-group">
+                        <label for="autonomy_days">Jours d'autonomie (sans soleil)</label>
+                        <input type="number" id="autonomy_days" placeholder="0" value="0">
+                    </div>
+                </div>
+                <div class="form-section">
+                    <h4>Paramètres Financiers</h4>
+                    <div class="form-group"><label for="cost_per_kwc">Coût / kWc Solaire (€)</label><input type="number" id="cost_per_kwc" placeholder="1200"></div>
+                    <div class="form-group"><label for="cost_per_pump">Coût / kW Pompe (€)</label><input type="number" id="cost_per_pump" placeholder="500"></div>
+                    <div class="form-group"><label for="lifespan">Durée de vie (années)</label><input type="number" id="lifespan" placeholder="25"></div>
+                </div>
+            </div>
+            <div class="pane-footer">
+                <button id="simulate-btn" class="btn-primary" onclick="calculate()">Lancer la Simulation</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- JAVASCRIPT                                                            -->
+    <!-- ===================================================================== -->
+    <script>
+        // --- DOM ELEMENTS ---
+        const appContainer = document.getElementById('app-container');
+        const rightPaneToggle = document.getElementById('right-pane-toggle');
+        const simulateBtn = document.getElementById('simulate-btn');
+
+        const navItems = {
+            newSim: document.getElementById('new-sim-btn'),
+            history: document.getElementById('history-btn'),
+            settings: document.getElementById('settings-btn')
+        };
+
+        const views = {
+            map: document.getElementById('map-view'),
+            results: document.getElementById('results-view'),
+            history: document.getElementById('history-view')
+        };
+
+        // --- LEAFLET MAP INIT ---
+        const map = L.map('map', { zoomControl: false }).setView([9.3077, 2.3158], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // --- APP STATE ---
+        let selectedCoords = null;
+        let marker = null;
+        let currentResults = null;
+        let productionChartInstance = null;
+
+        // --- VIEW & PANE MANAGEMENT ---
+        function switchView(activeViewKey) {
+            Object.values(views).forEach(view => view.classList.remove('active'));
+            views[activeViewKey].classList.add('active');
+
+            Object.values(navItems).forEach(item => item.classList.remove('active'));
+            if (activeViewKey === 'map' || activeViewKey === 'results') {
+                navItems.newSim.classList.add('active');
+            } else if (activeViewKey === 'history') {
+                navItems.history.classList.add('active');
+            }
+        }
+
+        function toggleRightPane() {
+            appContainer.classList.toggle('right-pane-collapsed');
+            setTimeout(() => { map.invalidateSize() }, 300);
+        }
+
+        // --- CORE FUNCTIONS ---
+        function startNewSimulation() {
+            views.results.innerHTML = '';
+            views.history.innerHTML = '';
+            switchView('map');
+            
+            document.getElementById('coords').value = '';
+            document.getElementById('volume').value = '';
+            document.getElementById('hmt').value = '';
+            document.getElementById('autonomy_days').value = '0';
+            document.getElementById('cost_per_kwc').value = '';
+            document.getElementById('cost_per_pump').value = '';
+            document.getElementById('lifespan').value = '';
+            
+            if (marker) {
+                map.removeLayer(marker);
+                marker = null;
+            }
+            selectedCoords = null;
+            currentResults = null;
+            simulateBtn.disabled = true;
+            map.setView([9.3077, 2.3158], 7);
+        }
+
+        function updateMarkerAndCoords(lat, lng, zoomLevel = 13) {
+            selectedCoords = { lat, lng };
+            document.getElementById('coords').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+            if (marker) { marker.setLatLng([lat, lng]); } else { marker = L.marker([lat, lng]).addTo(map); }
+            map.setView([lat, lng], zoomLevel);
+            simulateBtn.disabled = false;
+        }
+
+        map.on('click', (e) => updateMarkerAndCoords(e.latlng.lat, e.latlng.lng));
+
+        function geolocateAndShowMap() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => updateMarkerAndCoords(pos.coords.latitude, pos.coords.longitude),
+                    (err) => alert("Impossible d'obtenir votre position.")
+                );
+            } else { alert("La géolocalisation n'est pas supportée."); }
+        }
+
+        async function renderProductionChart(lat, lon, kwc) {
+            if (productionChartInstance) { productionChartInstance.destroy(); }
+            const chartWrapper = document.querySelector('.chart-wrapper');
+            if (!chartWrapper) return;
+
+            chartWrapper.innerHTML = '<p class="chart-message">Chargement des données de production...</p>';
+
+            try {
+                const response = await fetch('/api/hourly-production', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ lat, lon, kwc })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: "Réponse invalide du serveur" }));
+                    throw new Error(errorData.error || 'Erreur de l\'API horaire');
+                }
+                const hourlyData = await response.json();
+
+                if (!Array.isArray(hourlyData) || hourlyData.length !== 24) {
+                    throw new Error("Format de données invalide reçu du serveur.");
+                }
+
+                chartWrapper.innerHTML = '<canvas id="productionChart"></canvas>';
+                const ctx = document.getElementById('productionChart').getContext('2d');
+                
+                productionChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => `${i}h`),
+                        datasets: [{
+                            label: 'Production Solaire (kW)',
+                            data: hourlyData,
+                            borderColor: '#00C853',
+                            backgroundColor: 'rgba(0, 200, 83, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Production (kW)', color: '#A0A0A0' }, grid: { color: '#383838' }, ticks: { color: '#A0A0A0' } },
+                            x: { title: { display: true, text: 'Heure de la journée', color: '#A0A0A0' }, grid: { color: '#383838' }, ticks: { color: '#A0A0A0' } }
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Erreur lors du rendu du graphique:", error);
+                chartWrapper.innerHTML = `<p class="chart-message error">Impossible de charger le graphique : ${error.message}</p>`;
+            }
+        }
+
+        function renderResults(results, coords) {
+            const tech = results.technical;
+            const fin = results.financials;
+            const comp = results.components;
+            const bat = results.battery;
+
+            views.results.innerHTML = `
+                <div class="results-header">
+                    <h2>Résultats de la Simulation</h2>
+                    <p>Configuration optimale pour une localisation à ${coords.lat.toFixed(2)}, ${coords.lng.toFixed(2)}</p>
+                    ${!tech.pvgis_online ? `<p class="warning-message">Impossible de joindre le service de données solaires. Les calculs sont basés sur une estimation.</p>` : ''}
+                </div>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg></span>
+                            <h3>Performance Solaire</h3>
+                        </div>
+                        <div class="metric"><div class="metric-label">Puissance Requise</div><div class="metric-value">${tech.puissance_requise_kwc} kWc</div></div>
+                        <div class="metric"><div class="metric-label">Irradiation Locale</div><div class="metric-value">${tech.irradiation_locale_kwh_m2} kWh/m²/j</div></div>
+                    </div>
+                    ${comp ? `
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"></path><rect x="8" y="10" width="12" height="10" rx="2"></rect></svg></span>
+                            <h3>Matériel Suggéré</h3>
+                        </div>
+                        <ul class="component-list">
+                            <li><strong>Panneaux:</strong> ${comp.panel_quantity} x ${comp.panel_model}</li>
+                            <li><strong>Pompe:</strong> 1 x ${comp.pump_model}</li>
+                        </ul>
+                    </div>` : ''}
+                    ${bat ? `
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.19M15 6h2a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.19"></path><line x1="23" x2="23" y1="13" y2="11"></line><polyline points="11 6 7 12 13 12 9 18"></polyline></svg></span>
+                            <h3>Stockage d'Énergie</h3>
+                        </div>
+                        <div class="metric"><div class="metric-label">Capacité Utile</div><div class="metric-value">${bat.usable_capacity_kwh} kWh</div></div>
+                        <ul class="component-list">
+                            <li><strong>Batteries:</strong> ${bat.quantity} x ${bat.model}</li>
+                        </ul>
+                    </div>` : ''}
+                    ${fin ? `
+                    <div class="result-card">
+                        <div class="result-card-header">
+                            <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="1" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg></span>
+                            <h3>Analyse Financière</h3>
+                        </div>
+                        <div class="metric"><div class="metric-label">Investissement Total</div><div class="metric-value">${fin.total_investment.toLocaleString('fr-FR')} €</div></div>
+                        <div class="metric"><div class="metric-label">Économies vs. Diesel / an</div><div class="metric-value highlight">~${Math.round(fin.cost_vs_diesel_per_year).toLocaleString('fr-FR')} €</div></div>
+                    </div>` : ''}
+                </div>
+                
+                <div class="chart-container">
+                    <h3>Courbe de Production Journalière Estimée</h3>
+                    <div class="chart-wrapper">
+                        <!-- Le JS remplira ce conteneur -->
+                    </div>
+                </div>
+
+                <div class="results-footer">
+                    <button class="btn-secondary" onclick="startNewSimulation()">Nouvelle Simulation</button>
+                    <button class="btn-primary" onclick="downloadReport()">Télécharger le Rapport PDF</button>
+                </div>
+            `;
+
+            setTimeout(() => {
+                renderProductionChart(coords.lat, coords.lng, tech.puissance_requise_kwc);
+            }, 0);
+        }
+        
+        async function fetchAndRenderHistory() {
+            try {
+                const response = await fetch('/api/history');
+                if (!response.ok) throw new Error('Erreur de chargement de l\'historique.');
+                
+                const historyData = await response.json();
+                const historyContainer = views.history;
+                historyContainer.innerHTML = ''; 
+
+                if (historyData.length === 0) {
+                    historyContainer.innerHTML = `
+                        <div class="placeholder-view">
+                            <h2>Historique des Simulations</h2>
+                            <p>Aucune simulation n'a encore été sauvegardée.</p>
+                        </div>`;
+                    return;
+                }
+
+                let historyHTML = '<div class="placeholder-view"><h2>Historique des Simulations</h2></div><ul class="history-list">';
+                historyData.forEach(sim => {
+                    const resultsDataString = JSON.stringify(sim.results);
+                    const coordsDataString = JSON.stringify({ lat: sim.latitude, lng: sim.longitude });
+                    historyHTML += `
+                        <li class="history-item" data-results='${resultsDataString}' data-coords='${coordsDataString}'>
+                            <div class="history-item-main">
+                                <span class="history-item-name">${sim.name}</span>
+                                <span class="history-item-date">${sim.created_at}</span>
+                            </div>
+                            <div class="history-item-metric">
+                                ${sim.results.technical.puissance_requise_kwc} kWc
+                            </div>
+                        </li>
+                    `;
+                });
+                historyHTML += '</ul>';
+                historyContainer.innerHTML = historyHTML;
+
+                document.querySelectorAll('.history-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const results = JSON.parse(item.dataset.results);
+                        const coords = JSON.parse(item.dataset.coords);
+                        currentResults = results;
+                        selectedCoords = coords;
+                        switchView('results');
+                        renderResults(results, coords);
+                    });
+                });
+
+            } catch (error) {
+                console.error("Erreur d'historique:", error);
+                views.history.innerHTML = `<div class="placeholder-view"><h2>Erreur</h2><p>Impossible de charger l'historique.</p></div>`;
+            }
+        }
+                
+        async function calculate() {
+            if (!selectedCoords || !document.getElementById('volume').value || !document.getElementById('hmt').value) {
+                alert("Veuillez sélectionner une localisation et remplir tous les champs de besoins !"); return;
+            }
+            
+            const dataToSend = {};
+            const volume = document.getElementById('volume').value;
+            const hmt = document.getElementById('hmt').value;
+            const cost_per_kwc = document.getElementById('cost_per_kwc').value;
+            const cost_per_pump = document.getElementById('cost_per_pump').value;
+            const lifespan = document.getElementById('lifespan').value;
+            const optimizationTarget = document.querySelector('input[name="optimization_target"]:checked').value;
+            const autonomy_days = document.getElementById('autonomy_days').value;
+
+            dataToSend.lat = selectedCoords.lat;
+            dataToSend.lon = selectedCoords.lng;
+            dataToSend.volume = volume;
+            dataToSend.hmt = hmt;
+            dataToSend.optimization_target = optimizationTarget;
+            dataToSend.autonomy_days = autonomy_days || 0;
+            if (cost_per_kwc) dataToSend.cost_per_kwc = cost_per_kwc;
+            if (cost_per_pump) dataToSend.cost_per_pump = cost_per_pump;
+            if (lifespan) dataToSend.lifespan = lifespan;
+
+            simulateBtn.textContent = "Calcul en cours...";
+            simulateBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(dataToSend),
+                });
+                if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+                
+                const results = await response.json();
+                currentResults = results;
+                switchView('results');
+                renderResults(results, selectedCoords);
+
+            } catch (error) {
+                console.error('Erreur API:', error);
+                alert("Une erreur est survenue lors du calcul.");
+            } finally {
+                simulateBtn.textContent = "Lancer la Simulation";
+                simulateBtn.disabled = false;
+            }
+        }
+
+        async function downloadReport() {
+            if (!currentResults) { alert("Veuillez d'abord lancer une simulation."); return; }
+            try {
+                const response = await fetch('/api/generate-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(currentResults) });
+                if (!response.ok) throw new Error("Erreur génération PDF.");
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none'; a.href = url; a.download = 'rapport_numenergia.pdf';
+                document.body.appendChild(a); a.click();
+                window.URL.revokeObjectURL(url); document.body.removeChild(a);
+            } catch (error) { console.error("Erreur téléchargement PDF:", error); alert("Impossible de télécharger le rapport."); }
+        }
+
+        // --- WIRING EVENT LISTENERS ---
+        rightPaneToggle.addEventListener('click', toggleRightPane);
+        navItems.settings.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleRightPane();
+        });
+
+        navItems.newSim.addEventListener('click', (e) => {
+            e.preventDefault();
+            startNewSimulation();
+        });
+
+        navItems.history.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchView('history');
+            fetchAndRenderHistory();
+        });
+
+        window.onload = () => {
+            startNewSimulation();
+        };
+    </script>
+</body>
+</html>
