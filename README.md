@@ -34,7 +34,7 @@ Dans de nombreuses régions, notamment en Afrique subsaharienne, l'accès à une
 
 *   **Backend :** [Django](https://www.djangoproject.com/)
 *   **Frontend :** HTML5, CSS3, JavaScript (Vanilla JS)
-*   **Base de Données :** SQLite (en développement), PostgreSQL (en production)
+*   **Base de Données :** SQLite
 *   **Génération de PDF :** [WeasyPrint](https://weasyprint.org/)
 *   **Cartographie :** [Leaflet.js](https://leafletjs.com/)
 *   **Graphiques :** [Chart.js](https://www.chartjs.org/)
@@ -52,7 +52,7 @@ Dans de nombreuses régions, notamment en Afrique subsaharienne, l'accès à une
 
 1.  **Clonez le dépôt :**
     ```bash
-    git clone https://github.com/ShegouB/numenergia.git
+    git clone https://github.com/ShegouB/numenergiahackathon.git
     cd numenergia
     ```
 
