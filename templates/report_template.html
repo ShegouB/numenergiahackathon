@@ -5,45 +5,159 @@
     <meta charset="UTF-8">
     <title>Rapport de Simulation NUMENERGIA</title>
     <style>
-        @page { size: A4; margin: 1.5cm; }
-        body { font-family: 'Helvetica', sans-serif; font-size: 11pt; color: #333; }
-        h1 { color: #28a745; text-align: center; border-bottom: 2px solid #28a745; padding-bottom: 10px; }
-        h2 { color: #007bff; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 30px; }
-        .section { margin-bottom: 25px; }
-        .metric { display: -weasy-table; width: 100%; border-bottom: 1px solid #f0f0f0; padding: 8px 0; }
-        .metric span { display: -weasy-table-cell; }
-        .metric strong { display: -weasy-table-cell; text-align: right; font-size: 12pt; }
-        .footer { text-align: center; position: fixed; bottom: -20px; left: 0; right: 0; font-size: 9pt; color: #888; }
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+
+        /* --- VARIABLES DE COULEUR --- */
+        :root {
+            --color-primary: #007bff;
+            --color-secondary: #00C853;
+            --color-text-dark: #212529;
+            --color-text-light: #6c757d;
+            --color-border: #dee2e6;
+            --color-bg-light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-size: 10pt;
+            color: var(--color-text-dark);
+            line-height: 1.6;
+        }
+
+        /* --- EN-TÊTE ET PIED DE PAGE --- */
+        .header, .footer {
+            width: 100%;
+            text-align: center;
+            position: fixed;
+        }
+        .header {
+            top: -1cm; /* Positionné en dehors de la marge */
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--color-secondary);
+        }
+        .footer {
+            bottom: -1cm; /* Positionné en dehors de la marge */
+            padding-top: 10px;
+            border-top: 1px solid var(--color-border);
+            font-size: 8pt;
+            color: var(--color-text-light);
+        }
+        .logo-text {
+            font-weight: bold;
+            font-size: 14pt;
+            color: var(--color-primary);
+        }
+
+        /* --- TITRES --- */
+        h1 {
+            text-align: center;
+            color: var(--color-text-dark);
+            font-size: 18pt;
+            margin-bottom: 5px;
+        }
+        .report-subtitle {
+            text-align: center;
+            color: var(--color-text-light);
+            font-size: 10pt;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: var(--color-primary);
+            font-size: 14pt;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        /* --- STRUCTURE EN CARTES --- */
+        .card {
+            background-color: var(--color-bg-light);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            /* Empêche les cartes d'être coupées entre deux pages */
+            page-break-inside: avoid; 
+        }
+
+        /* --- AFFICHAGE DES MÉTRIQUES --- */
+        .metric {
+            display: -weasy-table;
+            width: 100%;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric .label {
+            display: -weasy-table-cell;
+            color: var(--color-text-light);
+        }
+        .metric .value {
+            display: -weasy-table-cell;
+            text-align: right;
+            font-weight: bold;
+            font-size: 11pt;
+        }
+        .metric .value.highlight {
+            color: var(--color-secondary);
+        }
     </style>
 </head>
 <body>
-    <div class="footer">Rapport généré par la plateforme NUMENERGIA</div>
-    <h1>Rapport de Simulation de Pompage Solaire</h1>
-    
-    <div class="section">
-        <h2>Recommandation Technique</h2>
-        <div class="metric"><span>Puissance Solaire Requise:</span> <strong>{{ data.technical.puissance_requise_kwc }} kWc</strong></div>
-        <div class="metric"><span>Puissance Pompe Suggérée:</span> <strong>{{ data.technical.puissance_pompe_kw }} kW</strong></div>
-        <div class="metric"><span>Irradiation Solaire Locale:</span> <strong>{{ data.technical.irradiation_locale_kwh_m2 }} kWh/m²/jour</strong></div>
-        <div class="metric"><span>Besoin Énergétique Journalier:</span> <strong>{{ data.technical.energie_journaliere_kwh }} kWh/jour</strong></div>
+    <div class="header">
+        <span class="logo-text">NUMENERGIA</span>
     </div>
 
-    {% if data.financials %}
-    <div class="section">
-        <h2>Analyse Financière Prévisionnelle</h2>
-        <div class="metric"><span>Investissement Total Estimé:</span> <strong>{{ data.financials.total_investment|floatformat:2 }} €</strong></div>
-        <div class="metric"><span>Coût Actualisé de l'Énergie (LCOE):</span> <strong>{{ data.financials.lcoe }} €/kWh</strong></div>
-        <div class="metric"><span>Économies annuelles vs. Générateur Diesel:</span> <strong>~ {{ data.financials.cost_vs_diesel_per_year|floatformat:0 }} €</strong></div>
+    <div class="footer">
+        Rapport généré le {{ simulation_date }} | Plateforme NUMENERGIA
     </div>
-    {% endif %}
 
-    {% if data.components %}
-    <div class="section">
-        <h2>Configuration Matériel Suggérée</h2>
-        <div class="metric"><span>Type de Panneaux:</span> <strong>{{ data.components.panel_model }}</strong></div>
-        <div class="metric"><span>Quantité de Panneaux:</span> <strong>{{ data.components.panel_quantity }} unités</strong></div>
-        <div class="metric"><span>Type de Pompe:</span> <strong>{{ data.components.pump_model }}</strong></div>
-    </div>
-    {% endif %}
+    <main>
+        <h1>Rapport de Simulation de Projet Solaire</h1>
+        <p class="report-subtitle">
+            Projet: <strong>{{ simulation.inputs.name }}</strong> | Localisation: ({{ simulation.inputs.latitude|floatformat:2 }}, {{ simulation.inputs.longitude|floatformat:2 }})
+        </p>
+
+        <div class="card">
+            <h2>Paramètres de la Simulation</h2>
+            <div class="metric"><span class="label">Volume d'eau journalier requis:</span> <span class="value">{{ simulation.inputs.volume_eau }} m³</span></div>
+            <div class="metric"><span class="label">Hauteur manométrique totale (HMT):</span> <span class="value">{{ simulation.inputs.hmt }} m</span></div>
+            <div class="metric"><span class="label">Jours d'autonomie souhaités:</span> <span class="value">{{ simulation.inputs.autonomy_days }}</span></div>
+            <div class="metric"><span class="label">Priorité d'optimisation:</span> <span class="value">{{ simulation.inputs.optimization_target|capfirst }}</span></div>
+        </div>
+
+        <div class="card">
+            <h2>Recommandation Technique</h2>
+            <div class="metric"><span class="label">Besoin énergétique journalier:</span> <span class="value">{{ simulation.results.technical.energie_journaliere_kwh }} kWh/jour</span></div>
+            <div class="metric"><span class="label">Irradiation solaire locale (estimée):</span> <span class="value">{{ simulation.results.technical.irradiation_locale_kwh_m2 }} kWh/m²/jour</span></div>
+            <div class="metric"><span class="label">Puissance solaire requise:</span> <span class="value highlight">{{ simulation.results.technical.puissance_requise_kwc }} kWc</span></div>
+        </div>
+        
+        {% if simulation.results.components %}
+        <div class="card">
+            <h2>Configuration Matériel Suggérée</h2>
+            <div class="metric"><span class="label">Panneaux solaires:</span> <span class="value">{{ simulation.results.components.panel_quantity }} x {{ simulation.results.components.panel_model }}</span></div>
+            <div class="metric"><span class="label">Pompe:</span> <span class="value">1 x {{ simulation.results.components.pump_model }}</span></div>
+            {% if simulation.results.battery %}
+            <div class="metric"><span class="label">Batteries:</span> <span class="value">{{ simulation.results.battery.quantity }} x {{ simulation.results.battery.model }}</span></div>
+            <div class="metric"><span class="label">Capacité de stockage utile:</span> <span class="value">{{ simulation.results.battery.usable_capacity_kwh }} kWh</span></div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if simulation.results.financials %}
+        <div class="card">
+            <h2>Analyse Financière Prévisionnelle</h2>
+            <div class="metric"><span class="label">Coût actualisé de l'énergie (LCOE):</span> <span class="value">{{ simulation.results.financials.lcoe }} €/kWh</span></div>
+            <div class="metric"><span class="label">Investissement total estimé:</span> <span class="value">{{ simulation.results.financials.total_investment|floatformat:2 }} €</span></div>
+            <div class="metric"><span class="label">Économies annuelles (vs. Diesel):</span> <span class="value highlight">~ {{ simulation.results.financials.cost_vs_diesel_per_year|floatformat:0 }} €</span></div>
+        </div>
+        {% endif %}
+    </main>
 </body>
 </html>

@@ -6,7 +6,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NUMENERGIA | Simulateur Énergétique</title>
-    
+
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
     <!-- Librairie pour la carte interactive -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -47,8 +48,21 @@
                 </a>
             </nav>
 
+            {% if user.is_authenticated %}
+                <div class="user-profile">
+                    <div class="user-avatar">{{ user.username|first|upper }}</div>
+                    <div class="user-details">
+                        <span class="username">{{ user.username }}</span>
+                        <form method="post" action="{% url 'logout' %}" id="logout-form">
+                            {% csrf_token %}
+                            <button type="submit" class="logout-link">Déconnexion</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
             <div class="pane-footer-left">
-                <p>Version 1.0.0</p>
+                <p class="version-info">Version 1.0.0</p>
             </div>
         </aside>
 
@@ -332,56 +346,80 @@
         }
         
         async function fetchAndRenderHistory() {
+            const historyContainer = views.history;
+            // Vider la vue et afficher un message de chargement
+            historyContainer.innerHTML = `<div class="placeholder-view"><h2>Chargement de l'historique...</h2></div>`;
+
             try {
                 const response = await fetch('/api/history');
-                if (!response.ok) throw new Error('Erreur de chargement de l\'historique.');
+                if (!response.ok) {
+                    // Essayons d'obtenir plus de détails sur l'erreur du serveur
+                    const errorData = await response.json().catch(() => null);
+                    throw new Error(errorData?.error || 'Erreur de chargement de l\'historique.');
+                }
                 
                 const historyData = await response.json();
-                const historyContainer = views.history;
-                historyContainer.innerHTML = ''; 
 
                 if (historyData.length === 0) {
                     historyContainer.innerHTML = `
                         <div class="placeholder-view">
-                            <h2>Historique des Simulations</h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                            <h2>Historique Vide</h2>
                             <p>Aucune simulation n'a encore été sauvegardée.</p>
                         </div>`;
                     return;
                 }
 
-                let historyHTML = '<div class="placeholder-view"><h2>Historique des Simulations</h2></div><ul class="history-list">';
+                let historyHTML = `
+                    <div class="history-page">
+                        <div class="history-header">
+                            <h1>Historique des Simulations</h1>
+                            <p>Cliquez sur une simulation pour revoir ses résultats détaillés.</p>
+                        </div>
+                        <div class="history-grid">
+                `;
                 historyData.forEach(sim => {
-                    const resultsDataString = JSON.stringify(sim.results);
-                    const coordsDataString = JSON.stringify({ lat: sim.latitude, lng: sim.longitude });
+                    // On échappe les apostrophes pour éviter de casser le HTML de l'attribut data-*
+                    const simDataString = JSON.stringify(sim.simulation_data).replace(/'/g, "&apos;");
+                    
+                    // On s'assure que les données nécessaires existent avant de tenter de les afficher
+                    const simName = sim.simulation_data?.inputs?.name || 'Simulation sans nom';
+                    const simDate = sim.simulation_data?.created_at || 'Date inconnue';
+                    const simPower = sim.simulation_data?.results?.technical?.puissance_requise_kwc || 'N/A';
+                    
                     historyHTML += `
-                        <li class="history-item" data-results='${resultsDataString}' data-coords='${coordsDataString}'>
-                            <div class="history-item-main">
-                                <span class="history-item-name">${sim.name}</span>
-                                <span class="history-item-date">${sim.created_at}</span>
+                        <div class="history-card" data-simulation='${simDataString}'>
+                            <div class="card-main-info">
+                                <span class="card-title">${simName}</span>
+                                <span class="card-date">${simDate}</span>
                             </div>
-                            <div class="history-item-metric">
-                                ${sim.results.technical.puissance_requise_kwc} kWc
+                            <div class="card-metric">
+                                <span>${simPower} kWc</span>
                             </div>
-                        </li>
+                        </div>
                     `;
                 });
-                historyHTML += '</ul>';
+                historyHTML += '</div></div>'; // Fin de .history-grid et .history-page
                 historyContainer.innerHTML = historyHTML;
 
-                document.querySelectorAll('.history-item').forEach(item => {
+                // Ré-attacher les écouteurs d'événements
+                document.querySelectorAll('.history-card').forEach(item => {
                     item.addEventListener('click', () => {
-                        const results = JSON.parse(item.dataset.results);
-                        const coords = JSON.parse(item.dataset.coords);
-                        currentResults = results;
-                        selectedCoords = coords;
+                        // On "déséchappe" les apostrophes avant de parser le JSON
+                        const simData = JSON.parse(item.dataset.simulation.replace(/&apos;/g, "'"));
+                        
+                        // La variable globale stocke maintenant TOUT (inputs + results)
+                        currentResults = simData; 
+                        
+                        // On bascule la vue et on affiche les résultats
                         switchView('results');
-                        renderResults(results, coords);
+                        renderResults(simData.results, simData.inputs);
                     });
                 });
 
             } catch (error) {
                 console.error("Erreur d'historique:", error);
-                views.history.innerHTML = `<div class="placeholder-view"><h2>Erreur</h2><p>Impossible de charger l'historique.</p></div>`;
+                historyContainer.innerHTML = `<div class="placeholder-view"><h2>Erreur</h2><p>${error.message}</p></div>`;
             }
         }
                 
@@ -435,17 +473,53 @@
         }
 
         async function downloadReport() {
-            if (!currentResults) { alert("Veuillez d'abord lancer une simulation."); return; }
+            // Si currentResults n'est pas défini, on ne fait rien
+            if (!currentResults) {
+                alert("Aucune simulation active à télécharger. Veuillez lancer ou sélectionner une simulation.");
+                return;
+            }
+
+            // On n'a plus besoin de lire le formulaire !
+            // La variable 'currentResults' contient déjà tout ce dont on a besoin.
+            const reportData = currentResults;
+
+            // Ajouter un feedback visuel à l'utilisateur
+            const downloadButton = document.querySelector('.results-footer .btn-primary');
+            if(downloadButton) downloadButton.textContent = 'Génération en cours...';
+
             try {
-                const response = await fetch('/api/generate-report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(currentResults) });
-                if (!response.ok) throw new Error("Erreur génération PDF.");
+                const response = await fetch('/api/generate-report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reportData) // On envoie l'objet complet et fiable
+                });
+
+                if (!response.ok) {
+                    throw new Error("Erreur lors de la génération du rapport PDF sur le serveur.");
+                }
+                
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.style.display = 'none'; a.href = url; a.download = 'rapport_numenergia.pdf';
-                document.body.appendChild(a); a.click();
-                window.URL.revokeObjectURL(url); document.body.removeChild(a);
-            } catch (error) { console.error("Erreur téléchargement PDF:", error); alert("Impossible de télécharger le rapport."); }
+                a.style.display = 'none';
+                a.href = url;
+                // Nom de fichier dynamique et sécurisé
+                const fileName = `rapport_numenergia_${reportData.inputs.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
+                a.download = fileName;
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+            } catch (error) {
+                console.error("Erreur de téléchargement du PDF:", error);
+                alert("Impossible de télécharger le rapport. Veuillez réessayer.");
+            } finally {
+                // Rétablir le texte du bouton
+                if(downloadButton) downloadButton.textContent = 'Télécharger le Rapport PDF';
+            }
         }
 
         // --- WIRING EVENT LISTENERS ---

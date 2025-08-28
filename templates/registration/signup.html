@@ -1,0 +1,104 @@
+{% extends "base_fullscreen.html" %}
+
+{% block title %}Inscription | NUMENERGIA{% endblock %}
+
+{% block content %}
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>Créer un Compte</h2>
+            <p class="auth-subtitle">Rejoignez NUMENERGIA et sauvegardez vos projets.</p>
+        </div>
+
+        <form method="post" class="auth-form" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="form-error-summary">{% for error in form.non_field_errors %}<span>{{ error }}</span>{% endfor %}</div>{% endif %}
+
+            <!-- Username Field -->
+            <div class="form-group-auth">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                <input type="text" name="{{ form.username.name }}" id="{{ form.username.id_for_label }}" class="form-control" required>
+                {% for error in form.username.errors %}<div class="form-field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group-auth">
+                <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                <input type="password" name="{{ form.password1.name }}" id="{{ form.password1.id_for_label }}" class="form-control" required>
+            </div>
+
+            <!-- Validateur (sans la règle de correspondance) -->
+            <div id="password-validator" class="password-validator">
+                <div id="length-check" class="validator-item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg><span>Au moins 8 caractères</span></div>
+                <div id="digit-check" class="validator-item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg><span>Contient au moins un chiffre</span></div>
+                <div id="letter-check" class="validator-item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg><span>Contient au moins une lettre</span></div>
+            </div>
+
+            <!-- Password Confirmation Field -->
+            <div class="form-group-auth">
+                <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                <input type="password" name="{{ form.password2.name }}" id="{{ form.password2.id_for_label }}" class="form-control" required>
+            </div>
+
+            <!-- Validateur de correspondance (placé ici) -->
+            <div id="match-validator" class="password-validator">
+                 <div id="match-check" class="validator-item"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg><span>Les mots de passe correspondent</span></div>
+            </div>
+            
+            <button type="submit" class="btn-primary-auth">S'inscrire</button>
+        </form>
+
+        <div class="auth-switch">
+            <p>Déjà un compte ? <a href="{% url 'login' %}">Connectez-vous</a></p>
+        </div>
+    </div>
+
+    <!-- Le script de validation est mis à jour -->
+    <script>
+        const passwordField = document.getElementById('{{ form.password1.id_for_label }}');
+        const confirmPasswordField = document.getElementById('{{ form.password2.id_for_label }}');
+        
+        const checks = {
+            length: document.getElementById('length-check'),
+            digit: document.getElementById('digit-check'),
+            letter: document.getElementById('letter-check'),
+            match: document.getElementById('match-check')
+        };
+
+        const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+        const circleIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle></svg>`;
+
+        function validatePassword() {
+            const password = passwordField.value;
+            const confirmPassword = confirmPasswordField.value;
+
+            // Règle 1: Longueur
+            updateValidator('length', password.length >= 8);
+
+            // Règle 2: Chiffre
+            updateValidator('digit', /\d/.test(password));
+
+            // Règle 3: Lettre
+            updateValidator('letter', /[a-zA-Z]/.test(password));
+
+            // Règle 4: Correspondance
+            // La vérification n'a de sens que si les deux champs sont remplis
+            updateValidator('match', password && confirmPassword && password === confirmPassword);
+        }
+
+        function updateValidator(checkName, isValid) {
+            const element = checks[checkName];
+            if (isValid) {
+                element.classList.add('valid');
+                element.classList.remove('invalid');
+                element.firstElementChild.innerHTML = checkIcon;
+            } else {
+                element.classList.add('invalid');
+                element.classList.remove('valid');
+                element.firstElementChild.innerHTML = circleIcon;
+            }
+        }
+
+        passwordField.addEventListener('input', validatePassword);
+        confirmPasswordField.addEventListener('input', validatePassword);
+    </script>
+{% endblock %}

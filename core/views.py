@@ -9,12 +9,22 @@ import json
 import requests
 import math
 from .models import FinancialAssumptions, SolarPanel, WaterPump, SimulationResult, Battery
+from django.contrib.auth.decorators import login_required 
+from django.shortcuts import render, redirect
+from django.contrib.auth.forms import UserCreationForm
+from django.urls import reverse_lazy
+from django.views import generic
+from datetime import datetime 
+
 
 # ==============================================================================
 # VUE PRINCIPALE
 # ==============================================================================
 
 def index_view(request):
+
+    if not request.user.is_authenticated:
+        return redirect('login') # Redirige vers la page de connexion
     """
     Rend la page principale de l'application (le template index.html).
     """
@@ -50,7 +60,7 @@ def get_solar_irradiation(lat, lon):
 # ==============================================================================
 # VUES API
 # ==============================================================================
-
+@login_required 
 @csrf_exempt
 def calculate_api(request):
     """
@@ -139,7 +149,27 @@ def calculate_api(request):
         }
 
         # --- 7. Sauvegarde ---
-        SimulationResult.objects.create(name=f"Projet à {lat:.2f}, {lon:.2f}", latitude=lat, longitude=lon, volume_eau=volume_eau_m3, hmt=hmt_m, results_json=response_data)
+        try:
+            full_simulation_data = {
+                'inputs': {
+                    'name': data.get('project_name', f"Projet à {lat:.2f}, {lon:.2f}"),
+                    'latitude': lat, 'longitude': lon,
+                    'volume_eau': volume_eau_m3, 'hmt': hmt_m,
+                    'autonomy_days': autonomy_days,
+                    'optimization_target': optimization_target
+                },
+                'results': response_data
+            }
+
+            SimulationResult.objects.create(
+                user=request.user,
+                name=full_simulation_data['inputs']['name'],
+                latitude=lat, longitude=lon, volume_eau=volume_eau_m3, hmt=hmt_m,
+                # On sauvegarde le nouvel objet complet
+                simulation_data_json=full_simulation_data
+            )
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde de la simulation: {e}")
         
         return JsonResponse(response_data)
     
@@ -193,35 +223,58 @@ def hourly_production_api(request):
             
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
-
+@login_required 
 @csrf_exempt
 def history_api(request):
-    """
-    API pour récupérer la liste des simulations sauvegardées.
-    """
     if request.method == 'GET':
-        simulations = SimulationResult.objects.all()[:20]
+        simulations = SimulationResult.objects.filter(user=request.user)[:20]
         data = []
         for sim in simulations:
-            data.append({ 'id': sim.id, 'name': sim.name, 'created_at': sim.created_at.strftime('%d/%m/%Y %H:%M'), 'latitude': sim.latitude, 'longitude': sim.longitude, 'results': sim.results_json })
+            # On récupère le JSON
+            sim_data = sim.simulation_data_json
+            # On y ajoute la date de création
+            sim_data['created_at'] = sim.created_at.strftime('%d/%m/%Y %H:%M')
+            data.append({
+                'id': sim.id,
+                'simulation_data': sim_data
+            })
         return JsonResponse(data, safe=False)
     return JsonResponse({'error': 'Méthode non autorisée'}, status=405)
 
-
 @csrf_exempt
 def generate_pdf_report(request):
-    """
-    API pour générer un rapport PDF à partir des données de simulation fournies.
-    """
     if request.method == 'POST':
-        data = json.loads(request.body)
-        html_string = render_to_string('report_template.html', {'data': data})
+        # On récupère l'objet de simulation complet (avec 'inputs' et 'results')
+        simulation_data = json.loads(request.body)
+        
+        # On vérifie que la structure est correcte
+        if 'inputs' not in simulation_data or 'results' not in simulation_data:
+            return HttpResponse("Format de données de simulation invalide.", status=400)
+
+        # On prépare le contexte pour le template en utilisant la structure correcte
+        context_data = {
+            # On passe l'objet complet au template
+            'simulation': simulation_data,
+            'simulation_date': datetime.now().strftime('%d/%m/%Y')
+        }
+        
+        html_string = render_to_string('report_template.html', context_data)
+        
         try:
             pdf_file = HTML(string=html_string).write_pdf()
             response = HttpResponse(pdf_file, content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="rapport_numenergia.pdf"'
+            # Nom de fichier sécurisé
+            file_name = f"rapport_numenergia_{simulation_data['inputs'].get('name', 'projet')}.pdf".replace(' ', '_')
+            response['Content-Disposition'] = f'attachment; filename="{file_name}"'
             return response
         except Exception as e:
             print(f"Erreur de génération PDF avec WeasyPrint: {e}")
             return HttpResponse("Erreur lors de la génération du rapport.", status=500)
+            
     return HttpResponse("Méthode non autorisée", status=405)
+    
+class SignUpView(generic.CreateView):
+    form_class = UserCreationForm
+    # Une fois l'inscription réussie, on redirige l'utilisateur vers la page de connexion
+    success_url = reverse_lazy('login') 
+    template_name = 'registration/signup.html'

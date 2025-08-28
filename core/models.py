@@ -1,6 +1,7 @@
 # core/models.py
 
 from django.db import models
+from django.contrib.auth.models import User
 
 class FinancialAssumptions(models.Model):
     # Coûts d'investissement
@@ -45,25 +46,19 @@ class WaterPump(models.Model):
         
 
 class SimulationResult(models.Model):
-    # Un nom pour la simulation, pour que l'utilisateur s'y retrouve
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=200, default='Simulation sans nom')
     created_at = models.DateTimeField(auto_now_add=True)
-
-    # Inputs de la simulation
+    simulation_data_json = models.JSONField()
     latitude = models.FloatField()
     longitude = models.FloatField()
     volume_eau = models.FloatField()
     hmt = models.FloatField()
-
-    # Outputs (on stocke le JSON complet des résultats pour plus de flexibilité)
-    # C'est une méthode très efficace pour sauvegarder des données structurées.
-    results_json = models.JSONField()
-
     def __str__(self):
-        return f"{self.name} - {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"{self.name} par {self.user.username}"
 
     class Meta:
-        ordering = ['-created_at'] # Les plus récents en premier
+        ordering = ['-created_at']
         
 
 class Battery(models.Model):
