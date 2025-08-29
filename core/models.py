@@ -16,10 +16,9 @@ class FinancialAssumptions(models.Model):
     cost_per_kwh_grid = models.FloatField(default=0.14) # Coût du kWh du réseau (SBEE)
     cost_per_kwh_diesel = models.FloatField(default=0.45) # Coût du kWh d'un générateur diesel (carburant + maintenance)
 
-    # Paramètres financiers
-    system_lifespan_years = models.IntegerField(default=25) # Durée de vie du système
-    discount_rate_percent = models.FloatField(default=5) # Taux d'actualisation pour le LCOE
-
+    
+    system_lifespan_years = models.IntegerField(default=25) 
+    discount_rate_percent = models.FloatField(default=5)
     def __str__(self):
         return "Hypothèses Financières Actives"
 
@@ -28,7 +27,7 @@ class SolarPanel(models.Model):
     model_name = models.CharField(max_length=100)
     power_watt = models.IntegerField()
     efficiency = models.FloatField()
-    cost = models.FloatField() # Coût par panneau
+    cost = models.FloatField()
 
     def __str__(self):
         return f"{self.brand} {self.model_name} - {self.power_watt}W"
@@ -64,21 +63,18 @@ class SimulationResult(models.Model):
 class Battery(models.Model):
     brand = models.CharField(max_length=100)
     model_name = models.CharField(max_length=100)
-    voltage = models.IntegerField() # en Volts (ex: 12, 24, 48)
-    capacity_ah = models.IntegerField() # Capacité en Ampères-heure (ex: 100, 200)
-    dod_percent = models.FloatField(default=50) # Profondeur de Décharge max (%)
-    efficiency = models.FloatField(default=85) # Rendement aller-retour (%)
-    cost = models.FloatField() # Coût par batterie
-
+    voltage = models.IntegerField()
+    capacity_ah = models.IntegerField() 
+    dod_percent = models.FloatField(default=50) 
+    efficiency = models.FloatField(default=85) 
+    cost = models.FloatField()
     def __str__(self):
         return f"{self.brand} {self.model_name} - {self.voltage}V {self.capacity_ah}Ah"
 
     @property
     def capacity_kwh(self):
-        # Capacité totale en kWh
         return (self.voltage * self.capacity_ah) / 1000
 
     @property
     def usable_capacity_kwh(self):
-        # Capacité réellement utilisable en kWh, en tenant compte de la DoD
         return self.capacity_kwh * (self.dod_percent / 100)

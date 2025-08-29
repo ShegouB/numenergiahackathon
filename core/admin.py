@@ -1,9 +1,10 @@
 # core/admin.py
 
 from django.contrib import admin
-from .models import FinancialAssumptions, SolarPanel, WaterPump, Battery
+from .models import FinancialAssumptions, SolarPanel, WaterPump, Battery, SimulationResult
 
 admin.site.register(FinancialAssumptions)
 admin.site.register(SolarPanel)
 admin.site.register(WaterPump)
 admin.site.register(Battery)
+admin.site.register(SimulationResult)

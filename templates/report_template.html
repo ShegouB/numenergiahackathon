@@ -10,7 +10,6 @@
             margin: 1cm;
         }
 
-        /* --- VARIABLES DE COULEUR --- */
         :root {
             --color-primary: #007bff;
             --color-secondary: #00C853;
@@ -27,19 +26,18 @@
             line-height: 1.6;
         }
 
-        /* --- EN-TÊTE ET PIED DE PAGE --- */
         .header, .footer {
             width: 100%;
             text-align: center;
             position: fixed;
         }
         .header {
-            top: -1cm; /* Positionné en dehors de la marge */
+            top: -1cm; 
             padding-bottom: 10px;
             border-bottom: 2px solid var(--color-secondary);
         }
         .footer {
-            bottom: -1cm; /* Positionné en dehors de la marge */
+            bottom: -1cm; 
             padding-top: 10px;
             border-top: 1px solid var(--color-border);
             font-size: 8pt;
@@ -51,7 +49,6 @@
             color: var(--color-primary);
         }
 
-        /* --- TITRES --- */
         h1 {
             text-align: center;
             color: var(--color-text-dark);
@@ -72,18 +69,15 @@
             border-bottom: 1px solid var(--color-border);
         }
 
-        /* --- STRUCTURE EN CARTES --- */
         .card {
             background-color: var(--color-bg-light);
             border: 1px solid var(--color-border);
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 20px;
-            /* Empêche les cartes d'être coupées entre deux pages */
             page-break-inside: avoid; 
         }
 
-        /* --- AFFICHAGE DES MÉTRIQUES --- */
         .metric {
             display: -weasy-table;
             width: 100%;

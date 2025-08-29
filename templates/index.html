@@ -8,26 +8,17 @@
     <title>NUMENERGIA | Simulateur Énergétique</title>
 
     <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
-    <!-- Librairie pour la carte interactive -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Police de caractères moderne -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Librairie pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Lien vers notre fichier de style -->
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
 <body>
     <div id="app-container" class="app-container">
-        <!-- ===================================================================== -->
-        <!-- PANNEAU DE GAUCHE : NAVIGATION                                        -->
-        <!-- ===================================================================== -->
         <aside class="left-pane">
             <div class="pane-header-left">
                 <div class="logo-text">NUMENERGIA</div>
@@ -66,18 +57,12 @@
             </div>
         </aside>
 
-        <!-- ===================================================================== -->
-        <!-- PANNEAU CENTRAL : ESPACE DE TRAVAIL                                   -->
-        <!-- ===================================================================== -->
         <main id="center-pane" class="center-pane">
             <div id="map-view" class="workspace-view active"><div id="map"></div></div>
             <div id="results-view" class="workspace-view"></div>
             <div id="history-view" class="workspace-view"></div>
         </main>
 
-        <!-- ===================================================================== -->
-        <!-- PANNEAU DE DROITE : CONFIGURATION                                     -->
-        <!-- ===================================================================== -->
         <aside id="right-pane" class="right-pane">
             <div class="pane-header">
                 <h3>Configuration du Projet</h3>
@@ -86,6 +71,12 @@
                 </button>
             </div>
             <div class="pane-content">
+                <div class="form-section">
+                    <h4>Nom du Projet</h4>
+                    <div class="form-group">
+                        <input type="text" id="project_name" placeholder="Ex: Irrigation Champ Nord" required>
+                    </div>
+                </div>
                 <div class="form-section">
                     <h4>Priorité d'Optimisation</h4>
                     <div class="radio-group">
@@ -125,11 +116,7 @@
         </aside>
     </div>
 
-    <!-- ===================================================================== -->
-    <!-- JAVASCRIPT                                                            -->
-    <!-- ===================================================================== -->
     <script>
-        // --- DOM ELEMENTS ---
         const appContainer = document.getElementById('app-container');
         const rightPaneToggle = document.getElementById('right-pane-toggle');
         const simulateBtn = document.getElementById('simulate-btn');
@@ -146,17 +133,14 @@
             history: document.getElementById('history-view')
         };
 
-        // --- LEAFLET MAP INIT ---
         const map = L.map('map', { zoomControl: false }).setView([9.3077, 2.3158], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-        // --- APP STATE ---
         let selectedCoords = null;
         let marker = null;
         let currentResults = null;
         let productionChartInstance = null;
 
-        // --- VIEW & PANE MANAGEMENT ---
         function switchView(activeViewKey) {
             Object.values(views).forEach(view => view.classList.remove('active'));
             views[activeViewKey].classList.add('active');
@@ -174,12 +158,12 @@
             setTimeout(() => { map.invalidateSize() }, 300);
         }
 
-        // --- CORE FUNCTIONS ---
         function startNewSimulation() {
             views.results.innerHTML = '';
             views.history.innerHTML = '';
             switchView('map');
             
+            document.getElementById('project_name').value = ''; 
             document.getElementById('coords').value = '';
             document.getElementById('volume').value = '';
             document.getElementById('hmt').value = '';
@@ -273,7 +257,17 @@
             }
         }
 
-        function renderResults(results, coords) {
+        function renderResults(simulationData) {
+            // SÉCURITÉ : Vérifier que les données sont valides avant de continuer
+            if (!simulationData || !simulationData.inputs || !simulationData.results || !simulationData.results.technical) {
+                console.error("renderResults a été appelée avec des données invalides ou incomplètes:", simulationData);
+                views.results.innerHTML = `<div class="placeholder-view"><h2>Erreur d'Affichage</h2><p>Impossible d'afficher les résultats car les données semblent corrompues.</p></div>`;
+                return;
+            }
+
+            // Extraction des données pour plus de clarté
+            const inputs = simulationData.inputs;
+            const results = simulationData.results;
             const tech = results.technical;
             const fin = results.financials;
             const comp = results.components;
@@ -282,7 +276,7 @@
             views.results.innerHTML = `
                 <div class="results-header">
                     <h2>Résultats de la Simulation</h2>
-                    <p>Configuration optimale pour une localisation à ${coords.lat.toFixed(2)}, ${coords.lng.toFixed(2)}</p>
+                    <p>Configuration optimale pour le projet "${inputs.name}" à (${inputs.latitude.toFixed(2)}, ${inputs.longitude.toFixed(2)})</p>
                     ${!tech.pvgis_online ? `<p class="warning-message">Impossible de joindre le service de données solaires. Les calculs sont basés sur une estimation.</p>` : ''}
                 </div>
                 <div class="results-grid">
@@ -329,9 +323,7 @@
                 
                 <div class="chart-container">
                     <h3>Courbe de Production Journalière Estimée</h3>
-                    <div class="chart-wrapper">
-                        <!-- Le JS remplira ce conteneur -->
-                    </div>
+                    <div class="chart-wrapper"></div>
                 </div>
 
                 <div class="results-footer">
@@ -340,22 +332,21 @@
                 </div>
             `;
 
+            // Lancer le rendu du graphique après que le DOM a été mis à jour
             setTimeout(() => {
-                renderProductionChart(coords.lat, coords.lng, tech.puissance_requise_kwc);
+                renderProductionChart(inputs.latitude, inputs.longitude, tech.puissance_requise_kwc);
             }, 0);
         }
         
+
         async function fetchAndRenderHistory() {
             const historyContainer = views.history;
-            // Vider la vue et afficher un message de chargement
             historyContainer.innerHTML = `<div class="placeholder-view"><h2>Chargement de l'historique...</h2></div>`;
 
             try {
                 const response = await fetch('/api/history');
                 if (!response.ok) {
-                    // Essayons d'obtenir plus de détails sur l'erreur du serveur
-                    const errorData = await response.json().catch(() => null);
-                    throw new Error(errorData?.error || 'Erreur de chargement de l\'historique.');
+                    throw new Error('Erreur de chargement de l\'historique depuis le serveur.');
                 }
                 
                 const historyData = await response.json();
@@ -379,73 +370,68 @@
                         <div class="history-grid">
                 `;
                 historyData.forEach(sim => {
-                    // On échappe les apostrophes pour éviter de casser le HTML de l'attribut data-*
                     const simDataString = JSON.stringify(sim.simulation_data).replace(/'/g, "&apos;");
-                    
-                    // On s'assure que les données nécessaires existent avant de tenter de les afficher
-                    const simName = sim.simulation_data?.inputs?.name || 'Simulation sans nom';
-                    const simDate = sim.simulation_data?.created_at || 'Date inconnue';
-                    const simPower = sim.simulation_data?.results?.technical?.puissance_requise_kwc || 'N/A';
                     
                     historyHTML += `
                         <div class="history-card" data-simulation='${simDataString}'>
                             <div class="card-main-info">
-                                <span class="card-title">${simName}</span>
-                                <span class="card-date">${simDate}</span>
+                                <span class="card-title">${sim.simulation_data.inputs.name}</span>
+                                <span class="card-date">${sim.simulation_data.created_at}</span>
                             </div>
                             <div class="card-metric">
-                                <span>${simPower} kWc</span>
+                                <span>${sim.simulation_data.results.technical.puissance_requise_kwc} kWc</span>
                             </div>
                         </div>
                     `;
                 });
-                historyHTML += '</div></div>'; // Fin de .history-grid et .history-page
+                historyHTML += '</div></div>';
                 historyContainer.innerHTML = historyHTML;
 
-                // Ré-attacher les écouteurs d'événements
                 document.querySelectorAll('.history-card').forEach(item => {
                     item.addEventListener('click', () => {
-                        // On "déséchappe" les apostrophes avant de parser le JSON
                         const simData = JSON.parse(item.dataset.simulation.replace(/&apos;/g, "'"));
                         
-                        // La variable globale stocke maintenant TOUT (inputs + results)
                         currentResults = simData; 
                         
-                        // On bascule la vue et on affiche les résultats
                         switchView('results');
-                        renderResults(simData.results, simData.inputs);
+                        // Appel corrigé avec l'objet complet
+                        renderResults(simData);
                     });
                 });
 
             } catch (error) {
                 console.error("Erreur d'historique:", error);
-                historyContainer.innerHTML = `<div class="placeholder-view"><h2>Erreur</h2><p>${error.message}</p></div>`;
+                historyContainer.innerHTML = `<div class="placeholder-view"><h2>Erreur</h2><p>Impossible de charger l'historique.</p></div>`;
             }
         }
                 
         async function calculate() {
-            if (!selectedCoords || !document.getElementById('volume').value || !document.getElementById('hmt').value) {
-                alert("Veuillez sélectionner une localisation et remplir tous les champs de besoins !"); return;
+            if (!selectedCoords || !document.getElementById('volume').value || !document.getElementById('hmt').value || !document.getElementById('project_name').value) {
+                alert("Veuillez donner un nom au projet, sélectionner une localisation et remplir tous les champs de besoins !");
+                return;
             }
             
             const dataToSend = {};
-            const volume = document.getElementById('volume').value;
-            const hmt = document.getElementById('hmt').value;
-            const cost_per_kwc = document.getElementById('cost_per_kwc').value;
-            const cost_per_pump = document.getElementById('cost_per_pump').value;
-            const lifespan = document.getElementById('lifespan').value;
-            const optimizationTarget = document.querySelector('input[name="optimization_target"]:checked').value;
-            const autonomy_days = document.getElementById('autonomy_days').value;
-
-            dataToSend.lat = selectedCoords.lat;
-            dataToSend.lon = selectedCoords.lng;
-            dataToSend.volume = volume;
-            dataToSend.hmt = hmt;
-            dataToSend.optimization_target = optimizationTarget;
-            dataToSend.autonomy_days = autonomy_days || 0;
-            if (cost_per_kwc) dataToSend.cost_per_kwc = cost_per_kwc;
-            if (cost_per_pump) dataToSend.cost_per_pump = cost_per_pump;
-            if (lifespan) dataToSend.lifespan = lifespan;
+            try {
+                dataToSend.lat = selectedCoords.lat;
+                dataToSend.lon = selectedCoords.lng;
+                dataToSend.project_name = document.getElementById('project_name').value;
+                dataToSend.volume = document.getElementById('volume').value;
+                dataToSend.hmt = document.getElementById('hmt').value;
+                dataToSend.optimization_target = document.querySelector('input[name="optimization_target"]:checked').value;
+                dataToSend.autonomy_days = document.getElementById('autonomy_days').value || 0;
+                
+                const cost_per_kwc = document.getElementById('cost_per_kwc').value;
+                const cost_per_pump = document.getElementById('cost_per_pump').value;
+                const lifespan = document.getElementById('lifespan').value;
+                if (cost_per_kwc) dataToSend.cost_per_kwc = cost_per_kwc;
+                if (cost_per_pump) dataToSend.cost_per_pump = cost_per_pump;
+                if (lifespan) dataToSend.lifespan = lifespan;
+            } catch (error) {
+                console.error("Erreur lors de la collecte des données du formulaire:", error);
+                alert("Un problème est survenu lors de la lecture des données. Vérifiez la console.");
+                return;
+            }
 
             simulateBtn.textContent = "Calcul en cours...";
             simulateBtn.disabled = true;
@@ -456,16 +442,20 @@
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(dataToSend),
                 });
-                if (!response.ok) throw new Error(`Erreur HTTP: ${response.status}`);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: `Erreur HTTP: ${response.status}` }));
+                    throw new Error(errorData.error);
+                }
                 
-                const results = await response.json();
-                currentResults = results;
+                const fullSimulationData = await response.json();
+                currentResults = fullSimulationData;
+                
                 switchView('results');
-                renderResults(results, selectedCoords);
+                renderResults(fullSimulationData);
 
             } catch (error) {
                 console.error('Erreur API:', error);
-                alert("Une erreur est survenue lors du calcul.");
+                alert(`Une erreur est survenue lors du calcul. ${error.message}`);
             } finally {
                 simulateBtn.textContent = "Lancer la Simulation";
                 simulateBtn.disabled = false;
@@ -473,17 +463,12 @@
         }
 
         async function downloadReport() {
-            // Si currentResults n'est pas défini, on ne fait rien
             if (!currentResults) {
                 alert("Aucune simulation active à télécharger. Veuillez lancer ou sélectionner une simulation.");
                 return;
             }
 
-            // On n'a plus besoin de lire le formulaire !
-            // La variable 'currentResults' contient déjà tout ce dont on a besoin.
             const reportData = currentResults;
-
-            // Ajouter un feedback visuel à l'utilisateur
             const downloadButton = document.querySelector('.results-footer .btn-primary');
             if(downloadButton) downloadButton.textContent = 'Génération en cours...';
 
@@ -491,7 +476,7 @@
                 const response = await fetch('/api/generate-report', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(reportData) // On envoie l'objet complet et fiable
+                    body: JSON.stringify(reportData) 
                 });
 
                 if (!response.ok) {
@@ -503,7 +488,6 @@
                 const a = document.createElement('a');
                 a.style.display = 'none';
                 a.href = url;
-                // Nom de fichier dynamique et sécurisé
                 const fileName = `rapport_numenergia_${reportData.inputs.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
                 a.download = fileName;
                 
@@ -517,12 +501,10 @@
                 console.error("Erreur de téléchargement du PDF:", error);
                 alert("Impossible de télécharger le rapport. Veuillez réessayer.");
             } finally {
-                // Rétablir le texte du bouton
                 if(downloadButton) downloadButton.textContent = 'Télécharger le Rapport PDF';
             }
         }
 
-        // --- WIRING EVENT LISTENERS ---
         rightPaneToggle.addEventListener('click', toggleRightPane);
         navItems.settings.addEventListener('click', (e) => {
             e.preventDefault();

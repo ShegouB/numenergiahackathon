@@ -23,7 +23,6 @@ body {
     overflow: hidden;
 }
 
-/* --- STRUCTURE PRINCIPALE (3 COLONNES) --- */
 .app-container {
     display: grid;
     grid-template-columns: 240px 1fr 380px;
@@ -31,7 +30,6 @@ body {
     transition: grid-template-columns 0.3s ease-in-out;
 }
 
-/* --- ÉTATS REPLIÉS --- */
 .app-container.right-pane-collapsed {
     grid-template-columns: 240px 1fr 0px;
 }
@@ -43,12 +41,12 @@ body {
     flex-direction: column;
 }
 
-/* === MODIFICATION N°1 : GESTION DU DÉPASSEMENT === */
+
 .center-pane { 
     position: relative;
-    overflow: auto; /* Permet le défilement à l'intérieur de ce panneau UNIQUEMENT */
+    overflow: auto;
 }
-/* === FIN DE LA MODIFICATION === */
+
 
 .right-pane {
     background-color: var(--bg-dark);
@@ -58,7 +56,7 @@ body {
     overflow: hidden;
 }
 
-/* --- PANNEAU DE GAUCHE : NAVIGATION --- */
+
 .pane-header-left {
     padding: 22px 20px;
     flex-shrink: 0;
@@ -76,7 +74,7 @@ body {
     color: transparent;
 }
 .main-nav {
-    flex-grow: 1; /* Pousse tout ce qui suit vers le bas */
+    flex-grow: 1;
     padding: 10px;
 }
 .nav-item {
@@ -115,7 +113,6 @@ body {
     flex-shrink: 0;
 }
 
-/* --- PANNEAU DE DROITE : CONFIGURATION --- */
 .pane-header {
     padding: 20px;
     border-bottom: 1px solid var(--border-color);
@@ -150,23 +147,22 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 .btn-secondary { background-color: var(--bg-light-dark); color: var(--text-primary); border: 1px solid var(--border-color); }
 .btn-secondary:hover { border-color: var(--text-secondary); }
 
-/* --- PANNEAU CENTRAL --- */
+
 .workspace-view { width: 100%; height: 100%; display: none; }
 .workspace-view.active { display: block; }
 #map { width: 100%; height: 100%; background-color: #333; }
 .leaflet-tile { filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7); }
 
-/* === MODIFICATION N°2 : CENTRAGE DU TITRE === */
+
 .placeholder-view {
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     height: 100%; color: var(--text-secondary);
-    text-align: center; /* Ajout pour centrer le texte */
+    text-align: center; 
 }
-/* === FIN DE LA MODIFICATION === */
+
 
 .placeholder-view h2 { font-size: 2rem; color: var(--text-primary); }
 
-/* --- STYLES POUR LES RÉSULTATS --- */
 #results-view { padding: 40px; text-align: center; color: var(--text-primary); } /* On retire overflow-y d'ici */
 .results-header { margin-bottom: 40px; }
 .results-header h2 { font-size: 2.5rem; }
@@ -188,8 +184,8 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 .history-page {
     padding: 40px;
     width: 100%;
-    max-width: 1200px; /* On donne une largeur max à la page */
-    margin: 0 auto; /* Centre la page horizontalement */
+    max-width: 1200px; 
+    margin: 0 auto; 
 }
 
 .history-header {
@@ -207,7 +203,6 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     font-size: 1.1rem;
 }
 
-/* On utilise une grille CSS pour les cartes */
 .history-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); /* Responsive */
@@ -234,7 +229,7 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 .card-main-info {
     display: flex;
     flex-direction: column;
-    gap: 5px; /* Espace entre le titre et la date */
+    gap: 5px; 
 }
 
 .card-title {
@@ -255,16 +250,16 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     background-color: rgba(0, 200, 83, 0.1);
     padding: 8px 15px;
     border-radius: 5px;
-    white-space: nowrap; /* Empêche le texte de se casser */
+    white-space: nowrap; 
 }
 
-/* Amélioration de la vue placeholder */
+
 .placeholder-view svg {
     color: var(--text-secondary);
     margin-bottom: 20px;
 }
 
-/* --- NOUVEAUX STYLES POUR LES BOUTONS RADIO --- */
+
 .radio-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -274,7 +269,7 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 }
 
 .radio-group input[type="radio"] {
-    display: none; /* On cache le bouton radio natif */
+    display: none; 
 }
 
 .radio-group label {
@@ -286,7 +281,6 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     transition: all 0.2s ease;
 }
 
-/* Style de l'étiquette quand le bouton radio associé est sélectionné */
 .radio-group input[type="radio"]:checked + label {
     background-color: var(--accent-green);
     color: black;
@@ -311,10 +305,9 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     height: 300px;
 }
 
-/* NOUVEAU STYLE POUR LE MESSAGE D'AVERTISSEMENT */
 .warning-message {
-    background-color: #4d3800; /* Orange foncé */
-    color: #ffc107; /* Jaune/Orange clair */
+    background-color: #4d3800; 
+    color: #ffc107; 
     padding: 10px 15px;
     border-radius: 5px;
     margin-top: 15px;
@@ -324,20 +317,16 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     margin-right: auto;
 }
 
-
-/* --- NOUVEAUX STYLES D'AUTHENTIFICATION - GLASSMORPHISM --- */
 .auth-body {
     display: flex;
-    align-items: center; /* Centre verticalement */
-    justify-content: center; /* Centre horizontalement */
+    align-items: center; 
+    justify-content: center; 
     min-height: 100vh;
-    padding: 40px 20px; /* Ajoute de l'espace en haut et en bas */
+    padding: 40px 20px;
     
     background-image: url('img/solarp.jpeg');
     background-size: cover;
     background-position: center;
-    
-    /* Permet le défilement si le contenu est trop grand pour la hauteur de l'écran */
     overflow-y: auto; 
 }
 
@@ -351,7 +340,6 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    /* On retire la hauteur minimale pour laisser la carte s'adapter */
 }
 
 .auth-header {
@@ -359,7 +347,6 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     margin-bottom: 30px;
 }
 
-/* On retire le logo texte pour un look plus épuré, seul le titre reste */
 .auth-header .logo-text {
     display: none;
 }
@@ -378,7 +365,7 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 25px; /* Plus d'espace */
+    gap: 25px;
 }
 
 .form-group-auth label {
@@ -386,16 +373,15 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     margin-bottom: 8px;
     color: var(--text-secondary);
     font-weight: 500;
-    padding-left: 15px; /* Indentation pour un look plus doux */
+    padding-left: 15px; 
 }
 
-/* Le nouveau style des champs de formulaire */
 .form-control {
     width: 100%;
-    padding: 14px 20px; /* Plus hauts */
-    border: none; /* Pas de bordure */
-    border-radius: 25px; /* Complètement arrondis */
-    background-color: rgba(0, 0, 0, 0.3); /* Fond semi-transparent */
+    padding: 14px 20px; 
+    border: none; 
+    border-radius: 25px; 
+    background-color: rgba(0, 0, 0, 0.3);
     color: var(--text-primary);
     font-family: var(--font-family);
     font-size: 1rem;
@@ -404,10 +390,9 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 .form-control:focus {
     outline: none;
     background-color: rgba(0, 0, 0, 0.5);
-    /* L'effet de surbrillance est retiré pour ce style */
     box-shadow: none; 
 }
-.form-control::placeholder { /* Style pour les placeholders si vous en ajoutez */
+.form-control::placeholder {
     color: var(--text-secondary);
 }
 
@@ -415,14 +400,13 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     width: 100%;
     padding: 14px;
     border: none;
-    border-radius: 25px; /* Complètement arrondi */
+    border-radius: 25px;
     font-family: var(--font-family);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 1rem;
     
-    /* Le nouveau style du bouton */
     background-image: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-green) 100%);
     color: white;
     margin-top: 15px;
@@ -439,7 +423,7 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     color: var(--text-secondary);
 }
 .auth-switch a {
-    color: var(--accent-green); /* Couleur plus vive */
+    color: var(--accent-green);
     font-weight: 600;
     text-decoration: none;
 }
@@ -447,14 +431,11 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     text-decoration: underline;
 }
 
-
-
-/* --- NOUVEAUX STYLES POUR LE VALIDATEUR DE MOT DE PASSE --- */
 .password-validator {
     display: flex;
     flex-direction: column;
-    gap: 8px; /* Espace entre chaque règle */
-    margin-top: -10px; /* Réduit l'espace après le champ mot de passe */
+    gap: 8px; 
+    margin-top: -10px;
     margin-bottom: 0px;
 }
 #match-validator {
@@ -471,15 +452,13 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     transition: all 0.2s ease;
 }
 
-/* Style par défaut (invalide) */
 .validator-item.invalid {
     color: var(--text-secondary);
 }
 .validator-item.invalid svg {
-    color: #6c757d; /* Gris foncé */
+    color: #6c757d;
 }
 
-/* Style quand la règle est validée */
 .validator-item.valid {
     color: var(--accent-green);
     font-weight: 500;
@@ -488,7 +467,6 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     color: var(--accent-green);
 }
 
-/* On retire le texte d'aide par défaut de Django qui est moche */
 .form-help-text {
     display: none;
 }
@@ -498,21 +476,18 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     margin-bottom: 20px;
 }
 
-/* --- NOUVEAUX STYLES POUR LE PROFIL UTILISATEUR --- */
 .pane-footer-left {
-    padding: 15px; /* Un padding plus petit */
-    border-top: 1px solid var(--border-color); /* Le séparateur final */
+    padding: 15px; 
+    border-top: 1px solid var(--border-color);
     flex-shrink: 0;
 }
-
-
 .user-profile {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 20px 15px; /* On lui donne son propre padding */
-    flex-shrink: 0; /* Empêche le profil de se réduire */
-    border-top: 1px solid var(--border-color); /* Le séparateur est maintenant au-dessus du profil */
+    padding: 20px 15px; 
+    flex-shrink: 0; 
+    border-top: 1px solid var(--border-color);
 }
 
 .user-avatar {
@@ -532,7 +507,7 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
 .user-details {
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Empêche le nom de déborder */
+    overflow: hidden; 
 }
 
 .user-details .username {
@@ -540,24 +515,24 @@ button { width: 100%; padding: 12px; border: none; border-radius: 5px; font-fami
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis; /* Ajoute "..." si le nom est trop long */
+    text-overflow: ellipsis; 
 }
 
 .user-details .logout-link {
-    /* NOUVELLES RÈGLES POUR LE BOUTON */
+    
     background: none;
     border: none;
     padding: 0;
-    font: inherit; /* Hérite la police du parent */
+    font: inherit; 
     cursor: pointer;
     
     font-size: 0.8rem;
     color: var(--text-secondary);
     text-decoration: none;
-    text-align: left; /* Assure l'alignement à gauche */
+    text-align: left; 
 }
 .user-details .logout-link:hover {
-    color: #ff8a80; /* Rouge clair au survol */
+    color: #ff8a80;
     text-decoration: underline;
 }
 
